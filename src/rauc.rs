@@ -14,14 +14,14 @@ fn run_checked(programm: &str, args: &[&str], ctx: &str) -> Result<()> {
     Ok(())
 }
 
-fn mark_good() -> Result<()> {
+pub fn mark_good() -> Result<()> {
     log::info!("Marking current RAUC slot as GOOD…");
     run_checked("rauc", &["status", "mark-good"], "rauc status mark-good")?;
     log::info!("Successfully marked slot as GOOD.");
     Ok(())
 }
 
-fn mark_bad() -> Result<()> {
+pub fn mark_bad() -> Result<()> {
     log::warn!("Marking current RAUC slot as BAD…");
     run_checked("rauc", &["status", "mark-bad"], "rauc status mark-bad")?;
     log::warn!("Successfully marked slot as BAD.");

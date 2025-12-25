@@ -1,8 +1,14 @@
 use anyhow::{Context, Result};
-use clap::Parser;
 use std::process::Command;
+use crate::rauc;
 
 const STARTED: &str = "started";
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FailedService {
+    pub name: String,
+    pub status: String,
+}
 
 // Dienste, die wir bewusst ignorieren (One-Shot, Konsolen, etc.)
 const IGNORE_EXACT: &[&str] = &["time-first-boot", "local"];
@@ -12,7 +18,7 @@ fn is_ignored_service(name: &str) -> bool {
     IGNORE_EXACT.contains(&name) || IGNORE_PREFIXES.iter().any(|p| name.starts_with(p))
 }
 
-fn collect_failed_services(stdout: &str) -> Vec<FailedService> {
+pub fn collect_failed_services(stdout: &str) -> Vec<FailedService> {
     let mut failed_services = Vec::new();
 
     for raw_line in stdout.lines() {
@@ -52,7 +58,7 @@ fn collect_failed_services(stdout: &str) -> Vec<FailedService> {
 }
 
 
-fn check_openrc_and_mark() -> Result<()> {
+pub fn check_openrc_and_mark() -> Result<()> {
     log::info!("Checking OpenRC services in runlevel 'default'…");
 
     let output = Command::new("rc-status")

@@ -11,4 +11,4 @@ env_logger = "0.11"
 
 [package.metadata.security]
 audit = true
-deny_warnings = truey
+deny_warnings = true
