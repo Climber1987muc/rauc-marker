@@ -10,6 +10,21 @@ pub struct FailedService {
     pub status: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HealthDecision {
+    Good,
+    Bad(Vec<FailedService>),
+}
+
+pub fn decide_health(stdout: &str) -> HealthDecision {
+    let failed = collect_failed_services(stdout);
+    if failed.is_empty() {
+        HealthDecision::Good
+    } else {
+        HealthDecision::Bad(failed)
+    }
+}
+
 // Dienste, die wir bewusst ignorieren (One-Shot, Konsolen, etc.)
 const IGNORE_EXACT: &[&str] = &["time-first-boot", "local"];
 const IGNORE_PREFIXES: &[&str] = &["getty."];
@@ -73,22 +88,20 @@ pub fn check_openrc_and_mark() -> Result<()> {
     let stdout =
         String::from_utf8(output.stdout).context("`rc-status` output was not valid UTF-8")?;
     
-    let failed_services = collect_failed_services(&stdout);
-
-    if failed_services.is_empty() {
-        log::info!("All relevant services in runlevel 'default' are started – marking GOOD");
-        rauc::mark_good()?;
-        Ok(())
-    } else {
-        log::error!("Some relevant services in runlevel 'default' are NOT started:");
-        for svc in &failed_services {
-            log::error!("  - {} ({})", svc.name, svc.status);
+    match decide_health(&stdout) {
+        HealthDecision::Good => {
+            log::info!("All relevant services in runlevel 'default' are started – marking GOOD");
+            crate::rauc::mark_good()?;
+            Ok(())
         }
-
-        log::error!("Marking slot BAD");
-        rauc::mark_bad()?;
-
-        // Exitcode != 0, damit OpenRC dein reboot auslöst
-        anyhow::bail!("OpenRC health check failed");
+        HealthDecision::Bad(failed_services) => {
+            log::error!("Some relevant services in runlevel 'default' are NOT started:");
+            for svc in &failed_services {
+                log::error!("  - {} ({})", svc.name, svc.status);
+            }
+            log::error!("Marking slot BAD");
+            crate::rauc::mark_bad()?;
+            anyhow::bail!("OpenRC health check failed");
+        }
     }
 }

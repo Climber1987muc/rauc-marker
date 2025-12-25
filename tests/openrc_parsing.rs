@@ -71,3 +71,16 @@ Runlevel: default
     let failed = collect_failed_services(input);
     assert!(failed.is_empty());
 }
+
+#[test]
+fn ignores_unparseable_lines_but_keeps_parsing() {
+    let input = r#"
+Runlevel: default
+this line is weird and has no brackets
+sshd [ started ]
+cron [ stopped ]
+"#;
+
+    let failed = collect_failed_services(input);
+    assert!(failed.iter().any(|s| s.name == "cron" && s.status == "stopped"));
+}
