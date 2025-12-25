@@ -1,0 +1,50 @@
+#!/sbin/openrc-run
+
+name="rauc-health"
+description="Check OpenRC and mark current RAUC slot as GOOD/BAD, reboot on BAD"
+
+command="/usr/sbin/rauc-health"
+command_args="check-openrc"
+command_user="root"
+pidfile="/run/rauc-health.pid"
+
+depend() {
+    need localmount
+    # nur Reihenfolge – Dienste dürfen auch failen, genau das prüfen wir ja
+    after bootmisc
+    after shotbrewer-bus
+    after shotbrewer-ui
+}
+
+start_pre() {
+    ebegin "Checking if RAUC and rc-status are available"
+
+    if ! command -v rauc >/dev/null 2>&1; then
+        eend 1 "rauc binary not found"
+        return 1
+    fi
+
+    if ! command -v rc-status >/dev/null 2>&1; then
+        eend 1 "rc-status binary not found"
+        return 1
+    fi
+
+    eend 0
+}
+
+start() {
+    ebegin "Running RAUC OpenRC health check (GOOD/BAD + optional reboot)"
+    ${command} ${command_args}
+    rc=$?
+
+    if [ ${rc} -ne 0 ]; then
+        eerror "Health check FAILED -> slot BAD -> rebooting now"
+        sleep 2
+        reboot -f
+        # falls reboot aus irgend einem Grund nicht geht:
+        # eend ${rc}
+        # return ${rc}
+    fi
+
+    eend 0
+}

@@ -1,0 +1,19 @@
+use clap::{Parser, Subcommand};
+
+#[derive(Parser, Debug)]
+#[command(name = "rauc-health")]
+#[command(about = "Simple RAUC health helper for OpenRC", long_about = None)]
+pub struct Cli {
+    #[command(subcommand)]
+    pub command: Commands,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    /// Mark the currently booted RAUC slot as good
+    MarkGood,
+    /// Mark the currently booted RAUC slot as bad
+    MarkBad,
+    /// Check OpenRC runlevel 'default' and mark RAUC slot good/bad
+    CheckOpenrc,
+}
