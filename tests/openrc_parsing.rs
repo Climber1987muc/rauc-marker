@@ -8,6 +8,21 @@ static CRONCFG: Lazy<HealthConfig> = Lazy::new (|| {
         ..Default::default()
     }
 });
+
+static SSHDCFG: Lazy<HealthConfig> = Lazy::new (|| {
+    HealthConfig {
+        required_services:  vec!["sshd".to_string()],
+        ..Default::default()
+    }
+});
+
+static TTYCFG: Lazy<HealthConfig> = Lazy::new (|| {
+    HealthConfig {
+        required_services:  vec!["getty.tty1".to_string()],
+        ..Default::default()
+    }
+});
+
 #[test]
 fn collects_non_started_required_services() {
     let input = r#"
@@ -33,10 +48,7 @@ cron [ stopped ]
 sshd [ started ]
 "#;
 
-    let mut cfg = HealthConfig::default();
-    cfg.required_services = vec!["sshd".to_string()];
-
-    let failed = collect_failed_services(input, &cfg);
+    let failed = collect_failed_services(input, &SSHDCFG);
 
     assert!(failed.is_empty());
 }
@@ -48,10 +60,8 @@ Runlevel: default
 getty.tty1 [ stopped ]
 "#;
 
-    let mut cfg = HealthConfig::default();
-    cfg.required_services = vec!["getty.tty1".to_string()];
 
-    let failed = collect_failed_services(input, &cfg);
+    let failed = collect_failed_services(input, &TTYCFG);
 
     assert!(failed.is_empty());
 }
@@ -77,11 +87,7 @@ Runlevel: default
 cron [ stopped ]
 more garbage here
 "#;
-
-    let mut cfg = HealthConfig::default();
-    cfg.required_services = vec!["cron".to_string()];
-
-    let failed = collect_failed_services(input, &cfg);
+    let failed = collect_failed_services(input, &CRONCFG);
 
     assert_eq!(failed.len(), 1);
     assert_eq!(failed[0].name, "cron");

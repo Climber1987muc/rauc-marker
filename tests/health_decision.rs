@@ -1,5 +1,21 @@
 use rauc_health::config::HealthConfig;
 use rauc_health::openrc::{decide_health, HealthDecision};
+use once_cell::sync::Lazy;
+
+static CRONCFG: Lazy<HealthConfig> = Lazy::new (|| {
+    HealthConfig {
+        required_services:  vec!["cron".to_string()],
+        ..Default::default()
+    }
+});
+
+static SSHDCFG: Lazy<HealthConfig> = Lazy::new (|| {
+    HealthConfig {
+        required_services:  vec!["sshd".to_string()],
+        ..Default::default()
+    }
+});
+
 
 #[test]
 fn decision_is_good_when_no_failures() {
@@ -8,10 +24,7 @@ Runlevel: default
 sshd [ started ]
 "#;
 
-    let mut cfg = HealthConfig::default();
-    cfg.required_services = vec!["sshd".to_string()];
-
-    let decision = decide_health(input, &cfg);
+    let decision = decide_health(input, &SSHDCFG);
     assert_eq!(decision, HealthDecision::Good);
 }
 
@@ -22,10 +35,8 @@ Runlevel: default
 cron [ stopped ]
 "#;
 
-    let mut cfg = HealthConfig::default();
-    cfg.required_services = vec!["cron".to_string()];
 
-    let decision = decide_health(input, &cfg);
+    let decision = decide_health(input, &CRONCFG);
 
     match decision {
         HealthDecision::Good => panic!("expected Bad, got Good"),
