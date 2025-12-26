@@ -83,7 +83,7 @@ Für Entwickler, Maintainer & Integratoren
               |
               v
 +---------------------------+     +----------------+
-| OpenRC Service State API  | --> | RAUC CLI/DBus  |
+| OpenRC Service State API  | --> | RAUC CLI       |
 +---------------------------+     +----------------+
 ```
 2. Flow:
