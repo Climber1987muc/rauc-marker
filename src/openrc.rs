@@ -31,12 +31,24 @@ pub fn collect_failed_services(stdout: &str, cfg: &HealthConfig) -> Vec<FailedSe
     let services = parse_services_map(stdout);
     let mut failed = Vec::new();
 
-    for (name, status) in services {
-        if is_ignored_service(&name, cfg) {
+    // Wenn required leer ist, würde sonst immer "Good" rauskommen.
+    // Ich empfehle: leer = "keine required definiert" => Good (oder bail).
+    // Für jetzt: Good (failed bleibt leer).
+    for req in &cfg.required_services {
+        if is_ignored_service(req, cfg) {
             continue;
         }
-        if status != STARTED {
-            failed.push(FailedService { name, status });
+
+        match services.get(req) {
+            Some(status) if status == STARTED => {}
+            Some(status) => failed.push(FailedService {
+                name: req.clone(),
+                status: status.clone(),
+            }),
+            None => failed.push(FailedService {
+                name: req.clone(),
+                status: "missing".to_string(),
+            }),
         }
     }
 

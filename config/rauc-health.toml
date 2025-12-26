@@ -1,0 +1,8 @@
+timeout_seconds = 30
+poll_interval_ms = 500
+
+required_services = ["net.eth0", "sshd"]
+optional_services = ["ntpd", "bluetooth"]
+
+ignore_prefixes = ["getty.", "agetty."]
+ignore_exact = ["local", "time-first-boot"]

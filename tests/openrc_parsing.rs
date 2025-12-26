@@ -1,93 +1,86 @@
-use rauc_health::openrc::collect_failed_services;
 use rauc_health::config::HealthConfig;
+use rauc_health::openrc::collect_failed_services;
 
 #[test]
-fn collects_non_started_services_and_ignores_configured_ones() {
+fn collects_non_started_required_services() {
     let input = r#"
 Runlevel: default
- sshd        [ started ]
- cron        [ stopped ]
- getty.tty1  [ stopped ]
- local       [ stopped ]
-Dynamic Runlevel: hotplugged
+cron [ stopped ]
+sshd [ started ]
 "#;
 
-    
-    let cfg = HealthConfig::default();
+    let mut cfg = HealthConfig::default();
+    cfg.required_services = vec!["cron".to_string()];
+
     let failed = collect_failed_services(input, &cfg);
-    assert!(failed.iter().any(|s| s.name == "cron" && s.status == "stopped"));
-    assert!(!failed.iter().any(|s| s.name == "getty.tty1"));
-    assert!(!failed.iter().any(|s| s.name == "local"));
+
+    assert_eq!(failed.len(), 1);
+    assert_eq!(failed[0].name, "cron");
+    assert_eq!(failed[0].status, "stopped");
 }
 
-
 #[test]
-fn no_failures_when_all_started() {
+fn ignores_non_required_services() {
     let input = r#"
 Runlevel: default
- sshd   [ started ]
- cron   [ started ]
+cron [ stopped ]
+sshd [ started ]
 "#;
 
-   let cfg = HealthConfig::default();
+    let mut cfg = HealthConfig::default();
+    cfg.required_services = vec!["sshd".to_string()];
+
     let failed = collect_failed_services(input, &cfg);
+
     assert!(failed.is_empty());
 }
 
-
 #[test]
-fn ignores_headers_and_empty_lines() {
+fn ignores_configured_ignored_services_even_if_required() {
     let input = r#"
-
 Runlevel: default
-
-Dynamic Runlevel: hotplugged
-
- sshd   [ started ]
+getty.tty1 [ stopped ]
 "#;
 
-    let cfg = HealthConfig::default();
+    let mut cfg = HealthConfig::default();
+    cfg.required_services = vec!["getty.tty1".to_string()];
+
     let failed = collect_failed_services(input, &cfg);
+
     assert!(failed.is_empty());
 }
-
 
 #[test]
 fn ignores_unparseable_lines() {
     let input = r#"
 Runlevel: default
-this line is weird
-sshd [ started ]
+this is garbage
 cron [ stopped ]
 "#;
 
-    let cfg = HealthConfig::default();
-    let failed = collect_failed_services(input, &cfg);
-    assert!(failed.iter().any(|s| s.name == "cron" && s.status == "stopped"));
-}
-#[test]
-fn ignores_exact_services() {
-    let input = r#"
-Runlevel: default
- local          [ stopped ]
- time-first-boot [ stopped ]
-"#;
+    let mut cfg = HealthConfig::default();
+    cfg.required_services = vec!["cron".to_string()];
 
-    let cfg = HealthConfig::default();
     let failed = collect_failed_services(input, &cfg);
-    assert!(failed.is_empty());
+
+    assert_eq!(failed.len(), 1);
+    assert_eq!(failed[0].name, "cron");
 }
 
 #[test]
 fn ignores_unparseable_lines_but_keeps_parsing() {
     let input = r#"
 Runlevel: default
-this line is weird and has no brackets
-sshd [ started ]
+### nonsense ###
 cron [ stopped ]
+more garbage here
 "#;
 
-    let cfg = HealthConfig::default();
+    let mut cfg = HealthConfig::default();
+    cfg.required_services = vec!["cron".to_string()];
+
     let failed = collect_failed_services(input, &cfg);
-    assert!(failed.iter().any(|s| s.name == "cron" && s.status == "stopped"));
+
+    assert_eq!(failed.len(), 1);
+    assert_eq!(failed[0].name, "cron");
 }

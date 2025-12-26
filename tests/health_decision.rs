@@ -5,10 +5,12 @@ use rauc_health::config::HealthConfig;
 fn decision_is_good_when_no_failures() {
     let input = r#"
 Runlevel: default
- sshd [ started ]
+sshd [ started ]
 "#;
 
-    let cfg = HealthConfig::default();
+    let mut cfg = HealthConfig::default();
+    cfg.required_services = vec!["sshd".to_string()];
+
     let decision = decide_health(input, &cfg);
     assert_eq!(decision, HealthDecision::Good);
 }
@@ -17,10 +19,12 @@ Runlevel: default
 fn decision_is_bad_when_there_are_failures() {
     let input = r#"
 Runlevel: default
- cron [ stopped ]
+cron [ stopped ]
 "#;
 
-    let cfg = HealthConfig::default();
+    let mut cfg = HealthConfig::default();
+    cfg.required_services = vec!["cron".to_string()];
+
     let decision = decide_health(input, &cfg);
 
     match decision {
