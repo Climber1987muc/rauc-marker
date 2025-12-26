@@ -1,4 +1,6 @@
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
+use clap::Args;
 
 #[derive(Parser, Debug)]
 #[command(name = "rauc-health")]
@@ -15,5 +17,16 @@ pub enum Commands {
     /// Mark the currently booted RAUC slot as bad
     MarkBad,
     /// Check OpenRC runlevel 'default' and mark RAUC slot good/bad
-    CheckOpenrc,
+    CheckOpenrc(CheckOpenrcArgs),
+}
+#[derive(Args, Debug, Clone)]
+pub struct CheckOpenrcArgs {
+    #[arg(long)]
+    pub config: Option<PathBuf>,
+
+    #[arg(long, default_value_t = 30)]
+    pub timeout_secunds: u64,
+    
+    #[arg(long, default_value_t = 500)]
+    pub poll_interval_ms : u64,
 }

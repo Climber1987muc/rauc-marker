@@ -1,4 +1,5 @@
 use rauc_health::openrc::collect_failed_services;
+use rauc_health::config::HealthConfig;
 
 #[test]
 fn collects_non_started_services_and_ignores_configured_ones() {
@@ -11,8 +12,9 @@ Runlevel: default
 Dynamic Runlevel: hotplugged
 "#;
 
-    let failed = collect_failed_services(input);
-
+    
+    let cfg = HealthConfig::default();
+    let failed = collect_failed_services(input, &cfg);
     assert!(failed.iter().any(|s| s.name == "cron" && s.status == "stopped"));
     assert!(!failed.iter().any(|s| s.name == "getty.tty1"));
     assert!(!failed.iter().any(|s| s.name == "local"));
@@ -27,7 +29,8 @@ Runlevel: default
  cron   [ started ]
 "#;
 
-    let failed = collect_failed_services(input);
+   let cfg = HealthConfig::default();
+    let failed = collect_failed_services(input, &cfg);
     assert!(failed.is_empty());
 }
 
@@ -43,7 +46,8 @@ Dynamic Runlevel: hotplugged
  sshd   [ started ]
 "#;
 
-    let failed = collect_failed_services(input);
+    let cfg = HealthConfig::default();
+    let failed = collect_failed_services(input, &cfg);
     assert!(failed.is_empty());
 }
 
@@ -57,7 +61,8 @@ sshd [ started ]
 cron [ stopped ]
 "#;
 
-    let failed = collect_failed_services(input);
+    let cfg = HealthConfig::default();
+    let failed = collect_failed_services(input, &cfg);
     assert!(failed.iter().any(|s| s.name == "cron" && s.status == "stopped"));
 }
 #[test]
@@ -68,7 +73,8 @@ Runlevel: default
  time-first-boot [ stopped ]
 "#;
 
-    let failed = collect_failed_services(input);
+    let cfg = HealthConfig::default();
+    let failed = collect_failed_services(input, &cfg);
     assert!(failed.is_empty());
 }
 
@@ -81,6 +87,7 @@ sshd [ started ]
 cron [ stopped ]
 "#;
 
-    let failed = collect_failed_services(input);
+    let cfg = HealthConfig::default();
+    let failed = collect_failed_services(input, &cfg);
     assert!(failed.iter().any(|s| s.name == "cron" && s.status == "stopped"));
 }

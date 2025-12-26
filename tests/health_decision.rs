@@ -1,4 +1,5 @@
 use rauc_health::openrc::{decide_health, HealthDecision};
+use rauc_health::config::HealthConfig;
 
 #[test]
 fn decision_is_good_when_no_failures() {
@@ -7,7 +8,8 @@ Runlevel: default
  sshd [ started ]
 "#;
 
-    let decision = decide_health(input);
+    let cfg = HealthConfig::default();
+    let decision = decide_health(input, &cfg);
     assert_eq!(decision, HealthDecision::Good);
 }
 
@@ -18,7 +20,8 @@ Runlevel: default
  cron [ stopped ]
 "#;
 
-    let decision = decide_health(input);
+    let cfg = HealthConfig::default();
+    let decision = decide_health(input, &cfg);
 
     match decision {
         HealthDecision::Good => panic!("expected Bad, got Good"),

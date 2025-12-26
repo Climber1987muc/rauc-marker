@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use std::process::Command;
-use crate::rauc;
+use std::collections::HashMap;
+use crate::config::HealthConfig;
 
 const STARTED: &str = "started";
 
@@ -16,8 +17,9 @@ pub enum HealthDecision {
     Bad(Vec<FailedService>),
 }
 
-pub fn decide_health(stdout: &str) -> HealthDecision {
-    let failed = collect_failed_services(stdout);
+
+pub fn decide_health(stdout: &str, cfg: &HealthConfig) -> HealthDecision {
+    let failed = collect_failed_services(stdout, cfg);
     if failed.is_empty() {
         HealthDecision::Good
     } else {
@@ -25,20 +27,34 @@ pub fn decide_health(stdout: &str) -> HealthDecision {
     }
 }
 
-// Dienste, die wir bewusst ignorieren (One-Shot, Konsolen, etc.)
-const IGNORE_EXACT: &[&str] = &["time-first-boot", "local"];
-const IGNORE_PREFIXES: &[&str] = &["getty."];
+pub fn collect_failed_services(stdout: &str, cfg: &HealthConfig) -> Vec<FailedService> {
+    let services = parse_services_map(stdout);
+    let mut failed = Vec::new();
 
-fn is_ignored_service(name: &str) -> bool {
-    IGNORE_EXACT.contains(&name) || IGNORE_PREFIXES.iter().any(|p| name.starts_with(p))
+    for (name, status) in services {
+        if is_ignored_service(&name, cfg) {
+            continue;
+        }
+        if status != STARTED {
+            failed.push(FailedService { name, status });
+        }
+    }
+
+    failed
 }
 
-pub fn collect_failed_services(stdout: &str) -> Vec<FailedService> {
-    let mut failed_services = Vec::new();
+fn is_ignored_service(name: &str, cfg: &HealthConfig) -> bool {
+    cfg.ignore_exact.iter().any(|s| s == name)
+        || cfg.ignore_prefixes.iter().any(|p| name.starts_with(p))
+}
+
+
+
+pub fn parse_services_map(stdout: &str) -> HashMap<String, String> {
+    let mut map = HashMap::new();
 
     for raw_line in stdout.lines() {
         let line = raw_line.trim();
-
         if line.is_empty() {
             continue;
         }
@@ -47,31 +63,16 @@ pub fn collect_failed_services(stdout: &str) -> Vec<FailedService> {
         }
 
         let mut it = line.split_whitespace();
-        let Some(svc_name) = it.next() else {
-            continue;
-        };
+        let Some(svc_name) = it.next() else { continue; };
 
         let _maybe_bracket = it.next(); // meistens "["
+        let Some(status_word) = it.next() else { continue; };
 
-        let Some(status_word) = it.next() else {
-            continue;
-        };
-
-        if is_ignored_service(svc_name) {
-            continue;
-        }
-
-        if status_word != STARTED {
-            failed_services.push(FailedService {
-                name: svc_name.to_string(),
-                status: status_word.to_string(),
-            });
-        }
+        map.insert(svc_name.to_string(), status_word.to_string());
     }
 
-    failed_services
+    map
 }
-
 
 pub fn check_openrc_and_mark() -> Result<()> {
     log::info!("Checking OpenRC services in runlevel 'default'…");
@@ -86,9 +87,9 @@ pub fn check_openrc_and_mark() -> Result<()> {
     }
 
     let stdout =
-        String::from_utf8(output.stdout).context("`rc-status` output was not valid UTF-8")?;
-    
-    match decide_health(&stdout) {
+    String::from_utf8(output.stdout).context("`rc-status` output was not valid UTF-8")?;
+    let cfg = HealthConfig::default();
+    match decide_health(&stdout, &cfg) {
         HealthDecision::Good => {
             log::info!("All relevant services in runlevel 'default' are started – marking GOOD");
             crate::rauc::mark_good()?;
