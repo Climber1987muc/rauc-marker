@@ -9,9 +9,12 @@ sshd [ started ]
 foo  [ stopped ]
 "#;
 
-    let cfg = from_toml_str(r#"
+    let cfg = from_toml_str(
+        r#"
 required_services = ["sshd"]
-"#).unwrap();
+"#,
+    )
+    .unwrap();
 
     let decision = decide_health(input, &cfg);
     assert!(matches!(decision, HealthDecision::Good));
@@ -24,9 +27,12 @@ Runlevel: default
 foo [ started ]
 "#;
 
-    let cfg = from_toml_str(r#"
+    let cfg = from_toml_str(
+        r#"
 required_services = ["sshd"]
-"#).unwrap();
+"#,
+    )
+    .unwrap();
 
     let decision = decide_health(input, &cfg);
     assert!(matches!(decision, HealthDecision::Bad(_)));
@@ -39,9 +45,12 @@ Runlevel: default
 sshd [ stopped ]
 "#;
 
-    let cfg = from_toml_str(r#"
+    let cfg = from_toml_str(
+        r#"
 required_services = ["sshd"]
-"#).unwrap();
+"#,
+    )
+    .unwrap();
 
     let decision = decide_health(input, &cfg);
     assert!(matches!(decision, HealthDecision::Bad(_)));

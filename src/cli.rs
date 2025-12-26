@@ -1,6 +1,6 @@
+use clap::Args;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-use clap::Args;
 
 #[derive(Parser, Debug)]
 #[command(name = "rauc-health")]
@@ -26,7 +26,7 @@ pub struct CheckOpenrcArgs {
 
     #[arg(long, default_value_t = 30)]
     pub timeout_secunds: u64,
-    
+
     #[arg(long, default_value_t = 500)]
-    pub poll_interval_ms : u64,
+    pub poll_interval_ms: u64,
 }

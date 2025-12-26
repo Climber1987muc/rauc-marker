@@ -16,9 +16,12 @@ fn empty_toml_uses_defaults() {
 
 #[test]
 fn partial_toml_overrides_required_only() {
-    let cfg = from_toml_str(r#"
+    let cfg = from_toml_str(
+        r#"
 required_services = ["sshd", "net.eth0"]
-"#).unwrap();
+"#,
+    )
+    .unwrap();
 
     assert_eq!(cfg.required_services, vec!["sshd", "net.eth0"]);
     // ignore defaults bleiben erhalten
@@ -27,10 +30,13 @@ required_services = ["sshd", "net.eth0"]
 
 #[test]
 fn ignore_can_be_overridden() {
-    let cfg = from_toml_str(r#"
+    let cfg = from_toml_str(
+        r#"
 ignore_exact = ["foo"]
 ignore_prefixes = ["bar."]
-"#).unwrap();
+"#,
+    )
+    .unwrap();
 
     assert_eq!(cfg.ignore_exact, vec!["foo"]);
     assert_eq!(cfg.ignore_prefixes, vec!["bar."]);

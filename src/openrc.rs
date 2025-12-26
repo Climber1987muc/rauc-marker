@@ -1,7 +1,9 @@
-use anyhow::{Context, Result};
-use std::process::Command;
-use std::collections::HashMap;
+use crate::cli::CheckOpenrcArgs;
 use crate::config::HealthConfig;
+use anyhow::{Context, Result};
+use std::collections::HashMap;
+use std::process::Command;
+use std::time::{Duration, Instant};
 
 const STARTED: &str = "started";
 
@@ -17,7 +19,6 @@ pub enum HealthDecision {
     Bad(Vec<FailedService>),
 }
 
-
 pub fn decide_health(stdout: &str, cfg: &HealthConfig) -> HealthDecision {
     let failed = collect_failed_services(stdout, cfg);
     if failed.is_empty() {
@@ -30,10 +31,6 @@ pub fn decide_health(stdout: &str, cfg: &HealthConfig) -> HealthDecision {
 pub fn collect_failed_services(stdout: &str, cfg: &HealthConfig) -> Vec<FailedService> {
     let services = parse_services_map(stdout);
     let mut failed = Vec::new();
-
-    // Wenn required leer ist, würde sonst immer "Good" rauskommen.
-    // Ich empfehle: leer = "keine required definiert" => Good (oder bail).
-    // Für jetzt: Good (failed bleibt leer).
     for req in &cfg.required_services {
         if is_ignored_service(req, cfg) {
             continue;
@@ -60,8 +57,6 @@ fn is_ignored_service(name: &str, cfg: &HealthConfig) -> bool {
         || cfg.ignore_prefixes.iter().any(|p| name.starts_with(p))
 }
 
-
-
 pub fn parse_services_map(stdout: &str) -> HashMap<String, String> {
     let mut map = HashMap::new();
 
@@ -75,10 +70,14 @@ pub fn parse_services_map(stdout: &str) -> HashMap<String, String> {
         }
 
         let mut it = line.split_whitespace();
-        let Some(svc_name) = it.next() else { continue; };
+        let Some(svc_name) = it.next() else {
+            continue;
+        };
 
         let _maybe_bracket = it.next(); // meistens "["
-        let Some(status_word) = it.next() else { continue; };
+        let Some(status_word) = it.next() else {
+            continue;
+        };
 
         map.insert(svc_name.to_string(), status_word.to_string());
     }
@@ -86,35 +85,52 @@ pub fn parse_services_map(stdout: &str) -> HashMap<String, String> {
     map
 }
 
-pub fn check_openrc_and_mark() -> Result<()> {
+pub fn check_openrc_and_mark(args: CheckOpenrcArgs) -> Result<()> {
     log::info!("Checking OpenRC services in runlevel 'default'…");
 
-    let output = Command::new("rc-status")
-        .args(["--nocolor", "default"])
-        .output()
-        .context("failed to execute `rc-status --nocolor default`")?;
+    let cfg = match args.config.as_deref() {
+        Some(path) => crate::config::from_file(path)?,
+        None => HealthConfig::default(),
+    };
 
-    if !output.status.success() {
-        anyhow::bail!("`rc-status` exited with {}", output.status);
-    }
+    let deadline = Instant::now() + Duration::from_secs(args.timeout_secunds);
 
-    let stdout =
-    String::from_utf8(output.stdout).context("`rc-status` output was not valid UTF-8")?;
-    let cfg = HealthConfig::default();
-    match decide_health(&stdout, &cfg) {
-        HealthDecision::Good => {
-            log::info!("All relevant services in runlevel 'default' are started – marking GOOD");
-            crate::rauc::mark_good()?;
-            Ok(())
+    loop {
+        let output = Command::new("rc-status")
+            .args(["--nocolor", "default"])
+            .output()
+            .context("failed to execute `rc-status --nocolor default`")?;
+
+        if !output.status.success() {
+            anyhow::bail!("`rc-status` exited with {}", output.status);
         }
-        HealthDecision::Bad(failed_services) => {
-            log::error!("Some relevant services in runlevel 'default' are NOT started:");
-            for svc in &failed_services {
-                log::error!("  - {} ({})", svc.name, svc.status);
+
+        let stdout =
+            String::from_utf8(output.stdout).context("`rc-status` output was not valid UTF-8")?;
+
+        match decide_health(&stdout, &cfg) {
+            HealthDecision::Good => {
+                log::info!("Required services are started – marking GOOD");
+                crate::rauc::mark_good()?;
+                return Ok(());
             }
-            log::error!("Marking slot BAD");
-            crate::rauc::mark_bad()?;
-            anyhow::bail!("OpenRC health check failed");
+            HealthDecision::Bad(failed) => {
+                // Noch Zeit? Dann warten und nochmal probieren
+                if Instant::now() < deadline {
+                    log::warn!("Health not ok yet ({} failing). Retrying…", failed.len());
+                    std::thread::sleep(Duration::from_millis(args.poll_interval_ms));
+                    continue;
+                }
+
+                // Timeout erreicht => BAD
+                log::error!("Timeout reached; still failing required services:");
+                for svc in &failed {
+                    log::error!("  - {} ({})", svc.name, svc.status);
+                }
+                log::error!("Marking slot BAD");
+                crate::rauc::mark_bad()?;
+                anyhow::bail!("OpenRC health check failed (timeout)");
+            }
         }
     }
 }

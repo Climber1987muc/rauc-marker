@@ -1,5 +1,5 @@
-use rauc_health::openrc::{decide_health, HealthDecision};
 use rauc_health::config::HealthConfig;
+use rauc_health::openrc::{decide_health, HealthDecision};
 
 #[test]
 fn decision_is_good_when_no_failures() {
@@ -30,7 +30,9 @@ cron [ stopped ]
     match decision {
         HealthDecision::Good => panic!("expected Bad, got Good"),
         HealthDecision::Bad(failed) => {
-            assert!(failed.iter().any(|s| s.name == "cron" && s.status == "stopped"));
+            assert!(failed
+                .iter()
+                .any(|s| s.name == "cron" && s.status == "stopped"));
         }
     }
 }

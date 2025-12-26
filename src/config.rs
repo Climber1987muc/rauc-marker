@@ -1,5 +1,6 @@
-use serde::Deserialize;
 use anyhow::{Context, Result};
+use serde::Deserialize;
+use std::path::Path;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct HealthConfig {
@@ -25,6 +26,12 @@ fn default_ignore_prefixes() -> Vec<String> {
 }
 pub fn from_toml_str(s: &str) -> Result<HealthConfig> {
     toml::from_str::<HealthConfig>(s).context("invalid config TOML")
+}
+
+pub fn from_file(path: &Path) -> Result<HealthConfig> {
+    let s = std::fs::read_to_string(path)
+        .with_context(|| format!("failed to read config file {}", path.display()))?;
+    from_toml_str(&s).with_context(|| format!("failed to parse config file {}", path.display()))
 }
 
 impl Default for HealthConfig {
