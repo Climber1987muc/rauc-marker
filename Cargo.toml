@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 
+
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
@@ -19,3 +20,6 @@ once_cell = "1"
 [package.metadata.security]
 audit = true
 deny_warnings = true
+[[bin]]
+name = "build_and_copy"
+path = "build_and_copy.rs"
