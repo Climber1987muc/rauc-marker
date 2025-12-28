@@ -22,3 +22,6 @@ echo "[5/5] Prüfe Lizenz-Compliance (MIT/Apache)..."
 cargo deny check licenses || { echo "Fehler: Unerlaubte Lizenzen gefunden!"; exit 1; }
 
 echo "=== ALLE CHECKS BESTANDEN: BEREIT FÜR DEN REALLIFE-EINSATZ ==="
+
+# 6. generate do
+cargo doc --no-deps --open
