@@ -16,7 +16,7 @@ pub enum Commands {
     MarkGood,
     /// Mark the currently booted RAUC slot as bad
     MarkBad,
-    /// Check OpenRC runlevel 'default' and mark RAUC slot good/bad
+    /// Check `OpenRC` runlevel 'default' and mark RAUC slot good/bad
     CheckOpenrc(CheckOpenrcArgs),
 }
 #[derive(Args, Debug, Clone)]

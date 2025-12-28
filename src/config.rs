@@ -24,10 +24,24 @@ fn default_ignore_exact() -> Vec<String> {
 fn default_ignore_prefixes() -> Vec<String> {
     vec!["getty.".into(), "agetty.".into()]
 }
+
+/// Parsed eine `HealthConfig` aus einem TOML-formatierten String.
+///
+/// # Errors
+///
+/// Diese Funktion gibt einen Fehler zurück, wenn:
+/// * Der String kein gültiges TOML-Format aufweist.
+/// * Erforderliche Felder (wie `runlevel`) fehlen oder ungültige Typen enthalten.
 pub fn from_toml_str(s: &str) -> Result<HealthConfig> {
     toml::from_str::<HealthConfig>(s).context("invalid config TOML")
 }
 
+/// Lädt die Konfiguration direkt aus einer Datei vom Dateisystem.
+///
+/// # Errors
+///
+/// Gibt einen Fehler zurück, wenn die Datei unter dem angegebenen `path` nicht
+/// gelesen werden kann oder der Inhalt kein gültiges TOML-Format besitzt.
 pub fn from_file(path: &Path) -> Result<HealthConfig> {
     let s = std::fs::read_to_string(path)
         .with_context(|| format!("failed to read config file {}", path.display()))?;

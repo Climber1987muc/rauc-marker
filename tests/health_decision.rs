@@ -1,21 +1,16 @@
+use once_cell::sync::Lazy;
 use rauc_health::config::HealthConfig;
 use rauc_health::openrc::{decide_health, HealthDecision};
-use once_cell::sync::Lazy;
 
-static CRONCFG: Lazy<HealthConfig> = Lazy::new (|| {
-    HealthConfig {
-        required_services:  vec!["cron".to_string()],
-        ..Default::default()
-    }
+static CRONCFG: Lazy<HealthConfig> = Lazy::new(|| HealthConfig {
+    required_services: vec!["cron".to_string()],
+    ..Default::default()
 });
 
-static SSHDCFG: Lazy<HealthConfig> = Lazy::new (|| {
-    HealthConfig {
-        required_services:  vec!["sshd".to_string()],
-        ..Default::default()
-    }
+static SSHDCFG: Lazy<HealthConfig> = Lazy::new(|| HealthConfig {
+    required_services: vec!["sshd".to_string()],
+    ..Default::default()
 });
-
 
 #[test]
 fn decision_is_good_when_no_failures() {
@@ -34,7 +29,6 @@ fn decision_is_bad_when_there_are_failures() {
 Runlevel: default
 cron [ stopped ]
 "#;
-
 
     let decision = decide_health(input, &CRONCFG);
 

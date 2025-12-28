@@ -1,0 +1,14 @@
+# Verwende die offizielle Edition 2021
+edition = "2021"
+
+# --- LESBARKEIT (Stable Features) ---
+# Erhöht die Zeilenlänge auf 100 für bessere Lesbarkeit auf modernen Schirmen
+max_width = 100
+
+# Alphabetische Sortierung der Imports ist im Stable-Channel erlaubt
+reorder_imports = true
+
+# --- ÜBERNAHME VON DEFAULTS ---
+# Da 'trailing_comma = Always' unstable ist, nutzt Rustfmt im Stable-Channel 
+# automatisch einen intelligenten Standard, der Kommas bei mehrzeiligen 
+# Listen setzt, sofern dies nicht explizit deaktiviert wird

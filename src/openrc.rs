@@ -19,6 +19,7 @@ pub enum HealthDecision {
     Bad(Vec<FailedService>),
 }
 
+#[must_use]
 pub fn decide_health(stdout: &str, cfg: &HealthConfig) -> HealthDecision {
     let failed = collect_failed_services(stdout, cfg);
     if failed.is_empty() {
@@ -28,6 +29,7 @@ pub fn decide_health(stdout: &str, cfg: &HealthConfig) -> HealthDecision {
     }
 }
 
+#[must_use]
 pub fn collect_failed_services(stdout: &str, cfg: &HealthConfig) -> Vec<FailedService> {
     let services = parse_services_map(stdout);
     let mut failed = Vec::new();
@@ -57,6 +59,7 @@ fn is_ignored_service(name: &str, cfg: &HealthConfig) -> bool {
         || cfg.ignore_prefixes.iter().any(|p| name.starts_with(p))
 }
 
+#[must_use]
 pub fn parse_services_map(stdout: &str) -> HashMap<String, String> {
     let mut map = HashMap::new();
 
@@ -85,7 +88,12 @@ pub fn parse_services_map(stdout: &str) -> HashMap<String, String> {
     map
 }
 
-pub fn check_openrc_and_mark(args: CheckOpenrcArgs) -> Result<()> {
+/// checked die Service und makiert den Slot
+///
+/// # Errors
+///
+/// Gibt Fehler zuerueckj beim Timeout von Service oder co
+pub fn check_openrc_and_mark(args: &CheckOpenrcArgs) -> Result<()> {
     log::info!("Checking OpenRC services in runlevel 'default'…");
 
     let cfg = match args.config.as_deref() {

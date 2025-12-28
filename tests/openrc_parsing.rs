@@ -1,26 +1,20 @@
+use once_cell::sync::Lazy;
 use rauc_health::config::HealthConfig;
 use rauc_health::openrc::collect_failed_services;
-use once_cell::sync::Lazy;
 
-static CRONCFG: Lazy<HealthConfig> = Lazy::new (|| {
-    HealthConfig {
-        required_services:  vec!["cron".to_string()],
-        ..Default::default()
-    }
+static CRONCFG: Lazy<HealthConfig> = Lazy::new(|| HealthConfig {
+    required_services: vec!["cron".to_string()],
+    ..Default::default()
 });
 
-static SSHDCFG: Lazy<HealthConfig> = Lazy::new (|| {
-    HealthConfig {
-        required_services:  vec!["sshd".to_string()],
-        ..Default::default()
-    }
+static SSHDCFG: Lazy<HealthConfig> = Lazy::new(|| HealthConfig {
+    required_services: vec!["sshd".to_string()],
+    ..Default::default()
 });
 
-static TTYCFG: Lazy<HealthConfig> = Lazy::new (|| {
-    HealthConfig {
-        required_services:  vec!["getty.tty1".to_string()],
-        ..Default::default()
-    }
+static TTYCFG: Lazy<HealthConfig> = Lazy::new(|| HealthConfig {
+    required_services: vec!["getty.tty1".to_string()],
+    ..Default::default()
 });
 
 #[test]
@@ -30,8 +24,6 @@ Runlevel: default
 cron [ stopped ]
 sshd [ started ]
 "#;
-
-
 
     let failed = collect_failed_services(input, &CRONCFG);
 
@@ -59,7 +51,6 @@ fn ignores_configured_ignored_services_even_if_required() {
 Runlevel: default
 getty.tty1 [ stopped ]
 "#;
-
 
     let failed = collect_failed_services(input, &TTYCFG);
 

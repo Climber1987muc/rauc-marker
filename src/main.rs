@@ -12,7 +12,7 @@ fn main() -> Result<()> {
     match cli.command {
         Commands::MarkGood => rauc::mark_good()?,
         Commands::MarkBad => rauc::mark_bad()?,
-        Commands::CheckOpenrc(args) => openrc::check_openrc_and_mark(args)?,
+        Commands::CheckOpenrc(args) => openrc::check_openrc_and_mark(&args)?,
     }
 
     Ok(())
