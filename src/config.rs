@@ -1,4 +1,3 @@
-use anyhow::{Context, Result};
 use serde::Deserialize;
 use std::path::Path;
 
@@ -32,8 +31,8 @@ fn default_ignore_prefixes() -> Vec<String> {
 /// Diese Funktion gibt einen Fehler zurück, wenn:
 /// * Der String kein gültiges TOML-Format aufweist.
 /// * Erforderliche Felder (wie `runlevel`) fehlen oder ungültige Typen enthalten.
-pub fn from_toml_str(s: &str) -> Result<HealthConfig> {
-    toml::from_str::<HealthConfig>(s).context("invalid config TOML")
+pub fn from_toml_str(s: &str) -> Result<HealthConfig, String> {
+    toml::from_str::<HealthConfig>(s).map_err(|_e| "invalid config TOML".to_string())
 }
 
 /// Lädt die Konfiguration direkt aus einer Datei vom Dateisystem.
@@ -42,10 +41,14 @@ pub fn from_toml_str(s: &str) -> Result<HealthConfig> {
 ///
 /// Gibt einen Fehler zurück, wenn die Datei unter dem angegebenen `path` nicht
 /// gelesen werden kann oder der Inhalt kein gültiges TOML-Format besitzt.
-pub fn from_file(path: &Path) -> Result<HealthConfig> {
+pub fn from_file(path: &Path) -> Result<HealthConfig, String> {
     let s = std::fs::read_to_string(path)
-        .with_context(|| format!("failed to read config file {}", path.display()))?;
-    from_toml_str(&s).with_context(|| format!("failed to parse config file {}", path.display()))
+        .map_err(|e| format!("failed to read config file {}: {}", path.display(), e))?;
+
+    let cfg = from_toml_str(&s)
+        .map_err(|e| format!("failed to parse config file {}: {}", path.display(), e))?;
+
+    Ok(cfg)
 }
 
 impl Default for HealthConfig {

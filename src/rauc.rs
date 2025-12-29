@@ -1,14 +1,13 @@
-use anyhow::{Context, Result};
 use std::process::Command;
 
-fn run_checked(programm: &str, args: &[&str], ctx: &str) -> Result<()> {
+fn run_checked(programm: &str, args: &[&str], ctx: &str) -> Result<(), String> {
     let status = Command::new(programm)
         .args(args)
         .status()
-        .with_context(|| format!("failed to execute `{ctx}`"))?;
+        .map_err(|e| format!("failed to execute `{ctx}`: {e}"))?;
 
     if !status.success() {
-        anyhow::bail!("`{ctx}` exited with {status}");
+        return Err(format!("`{ctx}` exited with {status}"));
     }
 
     Ok(())
@@ -20,7 +19,7 @@ fn run_checked(programm: &str, args: &[&str], ctx: &str) -> Result<()> {
 ///
 /// Diese Funktion gibt einen Fehler zurück, wenn das `rauc` Kommando
 /// nicht ausgeführt werden kann oder mit einem Fehlerstatus beendet wird.
-pub fn mark_good() -> Result<()> {
+pub fn mark_good() -> Result<(), String> {
     log::info!("Marking current RAUC slot as GOOD…");
     run_checked("rauc", &["status", "mark-good"], "rauc status mark-good")?;
     log::info!("Successfully marked slot as GOOD.");
@@ -33,7 +32,7 @@ pub fn mark_good() -> Result<()> {
 ///
 /// Diese Funktion gibt einen Fehler zurück, wenn das `rauc` Kommando
 /// nicht ausgeführt werden kann oder mit einem Fehlerstatus beendet wird.
-pub fn mark_bad() -> Result<()> {
+pub fn mark_bad() -> Result<(), String> {
     log::warn!("Marking current RAUC slot as BAD…");
     run_checked("rauc", &["status", "mark-bad"], "rauc status mark-bad")?;
     log::warn!("Successfully marked slot as BAD.");

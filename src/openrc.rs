@@ -1,6 +1,5 @@
 use crate::cli::CheckOpenrcArgs;
 use crate::config::HealthConfig;
-use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::process::Command;
 use std::time::{Duration, Instant};
@@ -93,7 +92,7 @@ pub fn parse_services_map(stdout: &str) -> HashMap<String, String> {
 /// # Errors
 ///
 /// Gibt Fehler zuerueckj beim Timeout von Service oder co
-pub fn check_openrc_and_mark(args: &CheckOpenrcArgs) -> Result<()> {
+pub fn check_openrc_and_mark(args: &CheckOpenrcArgs) -> Result<(), String> {
     log::info!("Checking OpenRC services in runlevel 'default'…");
 
     let cfg = match args.config.as_deref() {
@@ -107,14 +106,13 @@ pub fn check_openrc_and_mark(args: &CheckOpenrcArgs) -> Result<()> {
         let output = Command::new("rc-status")
             .args(["--nocolor", "default"])
             .output()
-            .context("failed to execute `rc-status --nocolor default`")?;
-
+            .map_err(|_e| "failed to execute `rc-status --nocolor default`".to_string())?;
         if !output.status.success() {
-            anyhow::bail!("`rc-status` exited with {}", output.status);
+            return Err(format!("`rc-status` exited with {}", output.status));
         }
 
-        let stdout =
-            String::from_utf8(output.stdout).context("`rc-status` output was not valid UTF-8")?;
+        let stdout = String::from_utf8(output.stdout)
+            .map_err(|_e| "`rc-status` output was not valid UTF-8".to_string())?;
 
         match decide_health(&stdout, &cfg) {
             HealthDecision::Good => {
@@ -137,7 +135,7 @@ pub fn check_openrc_and_mark(args: &CheckOpenrcArgs) -> Result<()> {
                 }
                 log::error!("Marking slot BAD");
                 crate::rauc::mark_bad()?;
-                anyhow::bail!("OpenRC health check failed (timeout)");
+                return Err("OpenRC health check failed (timeout)".to_string());
             }
         }
     }
