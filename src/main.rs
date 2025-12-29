@@ -8,11 +8,15 @@ fn main() -> Result<(), String> {
     env_logger::init();
     let cli = Cli::parse();
 
-    match cli.command {
-        Commands::MarkGood => rauc::mark_good()?,
-        Commands::MarkBad => rauc::mark_bad()?,
-        Commands::CheckOpenrc(args) => openrc::check_openrc_and_mark(&args)?,
+    let res = match cli.command {
+        Commands::MarkGood => rauc::mark_good(),
+        Commands::MarkBad => rauc::mark_bad(),
+        Commands::CheckOpenrc(args) => openrc::check_openrc_and_mark(&args),
+    };
+
+    if let Err(ref e) = res {
+        log::error!("{e}");
     }
 
-    Ok(())
+    res
 }
