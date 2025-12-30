@@ -328,6 +328,7 @@ dependencies = [
  "env_filter",
  "env_logger",
  "jiff",
+ "jiff-static",
  "log",
  "once_cell",
  "serde",
