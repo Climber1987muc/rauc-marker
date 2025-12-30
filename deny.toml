@@ -97,6 +97,7 @@ allow = [
     "BSD-3-Clause",
     "ISC",
     "Unicode-3.0",
+    "Zlib",
 ]
 
 # The confidence threshold for detecting a license from license text.
@@ -172,15 +173,15 @@ allow = [
 ]
 # List of crates to deny
 deny = [
-
+    "GPL-1.0",
     "GPL-2.0",
     "GPL-3.0",
+    "AGPL-1.0",   
     "AGPL-3.0",
-    #"ansi_term@0.11.0",
-    #{ crate = "ansi_term@0.11.0", reason = "you can specify a reason it is banned" },
-    # Wrapper crates can optionally be specified to allow the crate when it
-    # is a direct dependency of the otherwise banned crate
-    #{ crate = "ansi_term@0.11.0", wrappers = ["this-crate-directly-depends-on-ansi_term"] },
+    "LGPL-2.0",   
+    "LGPL-2.1",
+    "LGPL-3.0",
+    "CC-BY-NC-4.0", 
 ]
 
 # List of features to allow/deny

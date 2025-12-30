@@ -1,6 +1,0 @@
-(Apache-2.0 OR MIT) AND Unicode-3.0 (1): unicode-ident
-Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT (4): linux-raw-sys, rustix, wasip2, wit-bindgen
-Apache-2.0 OR LGPL-2.1-or-later OR MIT (1): r-efi
-Apache-2.0 OR MIT (47): anstream, anstyle, anstyle-parse, anstyle-query, anstyle-wincon, anyhow, bitflags, cfg-if, clap, clap_builder, clap_derive, clap_lex, colorchoice, env_filter, env_logger, equivalent, errno, fastrand, getrandom, hashbrown, heck, indexmap, is_terminal_polyfill, libc, log, once_cell, once_cell_polyfill, portable-atomic, portable-atomic-util, proc-macro2, quote, regex, regex-automata, regex-syntax, serde, serde_core, serde_derive, serde_spanned, syn, tempfile, toml, toml_datetime, toml_edit, toml_write, utf8parse, windows-link, windows-sys
-MIT (3): rauc-health, strsim, winnow
-MIT OR Unlicense (4): aho-corasick, jiff, jiff-static, memchr
