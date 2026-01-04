@@ -103,3 +103,5 @@ zmij = "=1.0.3"
 tempfile = "=3.23.0"
 once_cell = "1"
 serial_test = "3"
+[features]
+system-tests = []

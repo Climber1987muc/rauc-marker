@@ -1,0 +1,18 @@
+use rauc_health::cli::CheckOpenrcArgs;
+use rauc_health::openrc::check_openrc_and_mark;
+
+#[test]
+#[cfg(all(unix, feature = "system-tests"))]
+fn check_openrc_and_mark_runs_on_this_system() {
+    // Erwartung: rc-status existiert und OpenRC läuft.
+    // Dieser Test ist absichtlich nur opt-in.
+    let args = CheckOpenrcArgs {
+        config: None,
+        timeout_secunds: 1,
+        poll_interval_ms: 10,
+    };
+
+    // Je nach System kann das Ok oder Err sein – das ist “smoke test”.
+    // Du kannst hier nur prüfen, dass es nicht panikt und einen String liefert.
+    let _ = check_openrc_and_mark(&args);
+}
