@@ -25,3 +25,6 @@ echo "=== ALLE CHECKS BESTANDEN: BEREIT FÜR DEN REALLIFE-EINSATZ ==="
 
 # 6. generate do
 cargo doc --no-deps --open
+
+# 7. code coverage
+cargo llvm-cov
